@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!row) return;
     await client
       .from("store_status")
-      .update({ is_open: !row.is_open, updated_at: new Date() })
+      .update({ is_open: !row.is_open, update_at: new Date() })
       .eq("id", row.id);
     await loadStoreStatus();
   });
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!row) return;
     await client
       .from("store_status")
-      .update({ is_maintenance: !row.is_maintenance, updated_at: new Date() })
+      .update({ is_maintenance: !row.is_maintenance, update_at: new Date() })
       .eq("id", row.id);
     await loadStoreStatus();
   });
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!row) return;
     await client
       .from("store_status")
-      .update({ open_from, open_to, updated_at: new Date() })
+      .update({ open_from, open_to, update_at: new Date() })
       .eq("id", row.id);
     alert("Jam operasional tersimpan!");
   });
@@ -116,12 +116,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (row) {
       await client
         .from("hero_banner")
-        .update({ title, description, image, updated_at: new Date() })
+        .update({ title, description, image, update_at: new Date() })
         .eq("id", row.id);
     } else {
       await client
         .from("hero_banner")
-        .insert([{ title, description, image, created_at: new Date(), updated_at: new Date() }]);
+        .insert([{ title, description, image, created_at: new Date(), update_at: new Date() }]);
     }
     alert("Banner tersimpan!");
   });
@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const description = prompt("Deskripsi Promo:") || "";
     await client
       .from("promos")
-      .insert([{ title, description, is_active: true, created_at: new Date(), updated_at: new Date() }]);
+      .insert([{ title, description, is_active: true, created_at: new Date(), update_at: new Date() }]);
     await loadPromos();
   });
 
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = prompt("Judul Promo:", p.title);
     if (!title) return;
     const description = prompt("Deskripsi Promo:", p.description);
-    await client.from("promos").update({ title, description, updated_at: new Date() }).eq("id", id);
+    await client.from("promos").update({ title, description, update_at: new Date() }).eq("id", id);
     await loadPromos();
   }
 
@@ -221,12 +221,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (row) {
       await client
         .from("site_info")
-        .update({ alamat, wa, ongkir_per_km, updated_at: new Date() })
+        .update({ alamat, wa, ongkir_per_km, update_at: new Date() })
         .eq("id", row.id);
     } else {
       await client
         .from("site_info")
-        .insert([{ alamat, wa, ongkir_per_km, created_at: new Date(), updated_at: new Date() }]);
+        .insert([{ alamat, wa, ongkir_per_km, created_at: new Date(), update_at: new Date() }]);
     }
     alert("Informasi Toko tersimpan!");
   });
@@ -239,4 +239,5 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
+
 
