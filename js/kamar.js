@@ -36,7 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== DASHBOARD: Status Toko =====
   async function loadStoreStatus() {
-    const { data } = await client.from("store_status").select("*").eq("id", 1).single();
+    const { data, error } = await client.from("store_status").select("*").limit(1).single();
+    if (error) {
+      console.error("Error load store_status:", error.message);
+      return;
+    }
     if (!data) return;
     document.getElementById("store-status").textContent =
       `Toko: ${data.is_open ? "Buka" : "Tutup"} | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
@@ -45,27 +49,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").eq("id", 1).single();
-    await client.from("store_status").update({ is_open: !data.is_open, updated_at: new Date() }).eq("id", 1);
+    const { data } = await client.from("store_status").select("*").limit(1).single();
+    if (!data) return;
+    await client.from("store_status").update({ is_open: !data.is_open, updated_at: new Date() }).eq("id", data.id);
     await loadStoreStatus();
   });
 
   document.getElementById("btn-toggle-maint").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").eq("id", 1).single();
-    await client.from("store_status").update({ is_maintenance: !data.is_maintenance, updated_at: new Date() }).eq("id", 1);
+    const { data } = await client.from("store_status").select("*").limit(1).single();
+    if (!data) return;
+    await client.from("store_status").update({ is_maintenance: !data.is_maintenance, updated_at: new Date() }).eq("id", data.id);
     await loadStoreStatus();
   });
 
   document.getElementById("save-store-hours").addEventListener("click", async () => {
     const open_from = document.getElementById("open-from").value;
     const open_to = document.getElementById("open-to").value;
-    await client.from("store_status").update({ open_from, open_to, updated_at: new Date() }).eq("id", 1);
+    const { data } = await client.from("store_status").select("*").limit(1).single();
+    await client.from("store_status").update({ open_from, open_to, updated_at: new Date() }).eq("id", data.id);
     alert("Jam operasional tersimpan!");
   });
 
   // ===== HERO/BANNER =====
   async function loadHero() {
-    const { data } = await client.from("hero_banner").select("*").eq("id", 1).single();
+    const { data, error } = await client.from("hero_banner").select("*").limit(1).single();
+    if (error) {
+      console.error("Error load hero_banner:", error.message);
+      return;
+    }
     if (!data) return;
     document.getElementById("hero-title").value = data.title || "";
     document.getElementById("hero-desc").value = data.description || "";
@@ -76,16 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = document.getElementById("hero-title").value;
     const description = document.getElementById("hero-desc").value;
     const image = document.getElementById("hero-image").value;
-    await client.from("hero_banner").upsert({ id: 1, title, description, image, updated_at: new Date() });
+    const { data } = await client.from("hero_banner").select("*").limit(1).single();
+    if (data) {
+      await client.from("hero_banner").update({ title, description, image, updated_at: new Date() }).eq("id", data.id);
+    } else {
+      await client.from("hero_banner").insert([{ title, description, image, created_at: new Date(), updated_at: new Date() }]);
+    }
     alert("Banner tersimpan!");
   });
 
   // ===== PROMO / INFO =====
   async function loadPromos() {
-    const { data } = await client.from("promos").select("*").order("id", { ascending: true });
+    const { data, error } = await client.from("promos").select("*").order("id", { ascending: true });
+    if (error) {
+      console.error("Error load promos:", error.message);
+      return;
+    }
     const container = document.getElementById("promo-list");
     container.innerHTML = "";
-    data.forEach(p => {
+    (data || []).forEach(p => {
       const div = document.createElement("div");
       div.innerHTML = `
         <p><strong>${p.title}</strong>: ${p.description} 
@@ -128,13 +148,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== PRODUK =====
   async function loadProducts() {
-    const { data } = await client.from("products").select("*").order("id", { ascending: true });
+    const { data, error } = await client.from("products").select("*");
+    if (error) {
+      console.error("Error load products:", error.message);
+      return;
+    }
     const tbody = document.getElementById("products-tbody");
     tbody.innerHTML = "";
-    data.forEach(p => {
+    (data || []).forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><img src="${p.image}" alt="${p.name}"></td>
+        <td><img src="${p.image}" alt="${p.name}" style="width:50px;height:50px;"></td>
         <td>${p.name}</td>
         <td>${p.category || "-"}</td>
         <td>Rp ${p.price}</td>
@@ -157,48 +181,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document.getElementById("btn-new-product").addEventListener("click", async () => {
-    const name = prompt("Nama Produk:");
-    if (!name) return;
-    const description = prompt("Deskripsi:") || "";
-    const category = prompt("Kategori:") || "";
-    const price = parseFloat(prompt("Harga:") || 0);
-    const promo_price = parseFloat(prompt("Harga Promo (Opsional):") || 0);
-    const promo_min_qty = parseInt(prompt("Minimal Qty Promo (Opsional):") || 0);
-    const stock = parseInt(prompt("Stok:") || 0);
-    const image = prompt("URL Gambar:") || "";
-    await client.from("products").insert([{ name, description, category, price, promo_price, promo_min_qty, stock, image, is_active: true, created_at: new Date(), updated_at: new Date() }]);
-    await loadProducts();
-  });
-
-  async function editProduct(id) {
-    const { data: p } = await client.from("products").select("*").eq("id", id).single();
-    const name = prompt("Nama Produk:", p.name);
-    if (!name) return;
-    const description = prompt("Deskripsi:", p.description);
-    const category = prompt("Kategori:", p.category);
-    const price = parseFloat(prompt("Harga:", p.price));
-    const promo_price = parseFloat(prompt("Harga Promo:", p.promo_price || 0));
-    const promo_min_qty = parseInt(prompt("Minimal Qty Promo:", p.promo_min_qty || 0));
-    const stock = parseInt(prompt("Stok:", p.stock));
-    const is_active = confirm("Aktifkan produk?");
-    const image = prompt("URL Gambar:", p.image);
-    await client.from("products").update({ name, description, category, price, promo_price, promo_min_qty, stock, is_active, image, updated_at: new Date() }).eq("id", id);
-    await loadProducts();
-  }
-
-  async function deleteProduct(id) {
-    if (!confirm("Hapus produk ini?")) return;
-    await client.from("products").delete().eq("id", id);
-    await loadProducts();
-  }
-
   // ===== SITE INFO =====
   document.getElementById("save-siteinfo").addEventListener("click", async () => {
     const alamat = document.getElementById("site-alamat").value;
     const wa = document.getElementById("site-wa").value;
     const ongkir_per_km = parseFloat(document.getElementById("site-ongkir").value) || 0;
-    await client.from("site_info").upsert({ id: 1, alamat, wa, ongkir_per_km, updated_at: new Date() });
+    const { data } = await client.from("site_info").select("*").limit(1).single();
+    if (data) {
+      await client.from("site_info").update({ alamat, wa, ongkir_per_km, updated_at: new Date() }).eq("id", data.id);
+    } else {
+      await client.from("site_info").insert([{ alamat, wa, ongkir_per_km, created_at: new Date(), updated_at: new Date() }]);
+    }
     alert("Informasi Toko tersimpan!");
   });
 
@@ -210,4 +203,3 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
-
