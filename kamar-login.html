@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login Admin UD Fikri</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/kamar.css" />
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login Admin</h2>
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-    <button id="login-btn">Login</button>
-  </div>
+  <h2>Login Admin</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button id="login-btn">Login</button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -27,9 +23,11 @@
       const password = document.getElementById("password").value;
 
       const { data, error } = await client.auth.signInWithPassword({ email, password });
+
       if (error) {
-        alert("Login gagal: " + error.message);
+        alert("❌ Login gagal: " + error.message);
       } else {
+        alert("✅ Login berhasil!");
         window.location.href = "kamar.html";
       }
     });
