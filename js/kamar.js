@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // ===== Supabase Setup =====
   const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2tveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ===== Proteksi Login =====
@@ -210,3 +210,4 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
+
