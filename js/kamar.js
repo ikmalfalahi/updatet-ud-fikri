@@ -41,13 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== DASHBOARD: Status Toko =====
   async function loadStoreStatus() {
-    const { data, error } = await client.from("store_status").select("*").limit(1);
+    const { data: row, error } = await client
+      .from("store_status")
+      .select("*")
+      .maybeSingle();
+
     if (error) {
       console.error("Error load store_status:", error.message);
       return;
     }
-    const row = data && data.length > 0 ? data[0] : null;
     if (!row) return;
+
     document.getElementById("store-status").textContent = `Toko: ${
       row.is_open ? "Buka" : "Tutup"
     } | Maintenance: ${row.is_maintenance ? "Aktif" : "Nonaktif"}`;
@@ -56,8 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").limit(1);
-    const row = data && data.length > 0 ? data[0] : null;
+    const { data: row } = await client.from("store_status").select("*").maybeSingle();
     if (!row) return;
     await client
       .from("store_status")
@@ -67,8 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("btn-toggle-maint").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").limit(1);
-    const row = data && data.length > 0 ? data[0] : null;
+    const { data: row } = await client.from("store_status").select("*").maybeSingle();
     if (!row) return;
     await client
       .from("store_status")
@@ -80,8 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("save-store-hours").addEventListener("click", async () => {
     const open_from = document.getElementById("open-from").value;
     const open_to = document.getElementById("open-to").value;
-    const { data } = await client.from("store_status").select("*").limit(1);
-    const row = data && data.length > 0 ? data[0] : null;
+    const { data: row } = await client.from("store_status").select("*").maybeSingle();
     if (!row) return;
     await client
       .from("store_status")
@@ -92,12 +93,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== HERO/BANNER =====
   async function loadHero() {
-    const { data, error } = await client.from("hero_banner").select("*").limit(1);
+    const { data: row, error } = await client
+      .from("hero_banner")
+      .select("*")
+      .maybeSingle();
     if (error) {
       console.error("Error load hero_banner:", error.message);
       return;
     }
-    const row = data && data.length > 0 ? data[0] : null;
     if (!row) return;
     document.getElementById("hero-title").value = row.title || "";
     document.getElementById("hero-desc").value = row.description || "";
@@ -109,8 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const description = document.getElementById("hero-desc").value;
     const image = document.getElementById("hero-image").value;
 
-    const { data } = await client.from("hero_banner").select("*").limit(1);
-    const row = data && data.length > 0 ? data[0] : null;
+    const { data: row } = await client.from("hero_banner").select("*").maybeSingle();
 
     if (row) {
       await client
@@ -127,11 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== PROMO / INFO =====
   async function loadPromos() {
-    const { data, error } = await client.from("promos").select("*").order("id", { ascending: true });
+    const { data, error } = await client
+      .from("promos")
+      .select("*")
+      .order("id", { ascending: true });
     if (error) {
       console.error("Error load promos:", error.message);
       return;
     }
+
     const container = document.getElementById("promo-list");
     container.innerHTML = "";
     (data || []).forEach((p) => {
@@ -163,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   async function editPromo(id) {
-    const { data: p } = await client.from("promos").select("*").eq("id", id).single();
+    const { data: p } = await client.from("promos").select("*").eq("id", id).maybeSingle();
     const title = prompt("Judul Promo:", p.title);
     if (!title) return;
     const description = prompt("Deskripsi Promo:", p.description);
@@ -210,8 +216,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const alamat = document.getElementById("site-alamat").value;
     const wa = document.getElementById("site-wa").value;
     const ongkir_per_km = parseFloat(document.getElementById("site-ongkir").value) || 0;
-    const { data } = await client.from("site_info").select("*").limit(1);
-    const row = data && data.length > 0 ? data[0] : null;
+
+    const { data: row } = await client.from("site_info").select("*").maybeSingle();
+
     if (row) {
       await client
         .from("site_info")
