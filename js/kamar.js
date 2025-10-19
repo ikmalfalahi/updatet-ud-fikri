@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   // ===== Supabase Setup =====
   const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ===== Proteksi Login =====
@@ -15,10 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
   })();
 
   // ===== Sidebar Navigation =====
-  document.querySelectorAll(".sidebar ul li[data-section]").forEach(li => {
+  document.querySelectorAll(".sidebar ul li[data-section]").forEach((li) => {
     li.addEventListener("click", () => {
-      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active-section"));
-      document.querySelectorAll(".sidebar ul li").forEach(l => l.classList.remove("active"));
+      document
+        .querySelectorAll(".section")
+        .forEach((sec) => sec.classList.remove("active-section"));
+      document
+        .querySelectorAll(".sidebar ul li")
+        .forEach((l) => l.classList.remove("active"));
       const secId = li.dataset.section;
       if (secId) {
         document.getElementById(secId).classList.add("active-section");
@@ -36,62 +41,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== DASHBOARD: Status Toko =====
   async function loadStoreStatus() {
-    const { data, error } = await client.from("store_status").select("*").limit(1).single();
+    const { data, error } = await client.from("store_status").select("*").limit(1);
     if (error) {
       console.error("Error load store_status:", error.message);
       return;
     }
-    if (!data) return;
-    document.getElementById("store-status").textContent =
-      `Toko: ${data.is_open ? "Buka" : "Tutup"} | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
-    document.getElementById("open-from").value = data.open_from || "";
-    document.getElementById("open-to").value = data.open_to || "";
+    const row = data && data.length > 0 ? data[0] : null;
+    if (!row) return;
+    document.getElementById("store-status").textContent = `Toko: ${
+      row.is_open ? "Buka" : "Tutup"
+    } | Maintenance: ${row.is_maintenance ? "Aktif" : "Nonaktif"}`;
+    document.getElementById("open-from").value = row.open_from || "";
+    document.getElementById("open-to").value = row.open_to || "";
   }
 
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").limit(1).single();
-    if (!data) return;
-    await client.from("store_status").update({ is_open: !data.is_open, updated_at: new Date() }).eq("id", data.id);
+    const { data } = await client.from("store_status").select("*").limit(1);
+    const row = data && data.length > 0 ? data[0] : null;
+    if (!row) return;
+    await client
+      .from("store_status")
+      .update({ is_open: !row.is_open, updated_at: new Date() })
+      .eq("id", row.id);
     await loadStoreStatus();
   });
 
   document.getElementById("btn-toggle-maint").addEventListener("click", async () => {
-    const { data } = await client.from("store_status").select("*").limit(1).single();
-    if (!data) return;
-    await client.from("store_status").update({ is_maintenance: !data.is_maintenance, updated_at: new Date() }).eq("id", data.id);
+    const { data } = await client.from("store_status").select("*").limit(1);
+    const row = data && data.length > 0 ? data[0] : null;
+    if (!row) return;
+    await client
+      .from("store_status")
+      .update({ is_maintenance: !row.is_maintenance, updated_at: new Date() })
+      .eq("id", row.id);
     await loadStoreStatus();
   });
 
   document.getElementById("save-store-hours").addEventListener("click", async () => {
     const open_from = document.getElementById("open-from").value;
     const open_to = document.getElementById("open-to").value;
-    const { data } = await client.from("store_status").select("*").limit(1).single();
-    await client.from("store_status").update({ open_from, open_to, updated_at: new Date() }).eq("id", data.id);
+    const { data } = await client.from("store_status").select("*").limit(1);
+    const row = data && data.length > 0 ? data[0] : null;
+    if (!row) return;
+    await client
+      .from("store_status")
+      .update({ open_from, open_to, updated_at: new Date() })
+      .eq("id", row.id);
     alert("Jam operasional tersimpan!");
   });
 
   // ===== HERO/BANNER =====
   async function loadHero() {
-    const { data, error } = await client.from("hero_banner").select("*").limit(1).single();
+    const { data, error } = await client.from("hero_banner").select("*").limit(1);
     if (error) {
       console.error("Error load hero_banner:", error.message);
       return;
     }
-    if (!data) return;
-    document.getElementById("hero-title").value = data.title || "";
-    document.getElementById("hero-desc").value = data.description || "";
-    document.getElementById("hero-image").value = data.image || "";
+    const row = data && data.length > 0 ? data[0] : null;
+    if (!row) return;
+    document.getElementById("hero-title").value = row.title || "";
+    document.getElementById("hero-desc").value = row.description || "";
+    document.getElementById("hero-image").value = row.image || "";
   }
 
   document.getElementById("save-hero").addEventListener("click", async () => {
     const title = document.getElementById("hero-title").value;
     const description = document.getElementById("hero-desc").value;
     const image = document.getElementById("hero-image").value;
-    const { data } = await client.from("hero_banner").select("*").limit(1).single();
-    if (data) {
-      await client.from("hero_banner").update({ title, description, image, updated_at: new Date() }).eq("id", data.id);
+
+    const { data } = await client.from("hero_banner").select("*").limit(1);
+    const row = data && data.length > 0 ? data[0] : null;
+
+    if (row) {
+      await client
+        .from("hero_banner")
+        .update({ title, description, image, updated_at: new Date() })
+        .eq("id", row.id);
     } else {
-      await client.from("hero_banner").insert([{ title, description, image, created_at: new Date(), updated_at: new Date() }]);
+      await client
+        .from("hero_banner")
+        .insert([{ title, description, image, created_at: new Date(), updated_at: new Date() }]);
     }
     alert("Banner tersimpan!");
   });
@@ -105,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const container = document.getElementById("promo-list");
     container.innerHTML = "";
-    (data || []).forEach(p => {
+    (data || []).forEach((p) => {
       const div = document.createElement("div");
       div.innerHTML = `
         <p><strong>${p.title}</strong>: ${p.description} 
@@ -115,10 +144,10 @@ document.addEventListener("DOMContentLoaded", () => {
       container.appendChild(div);
     });
 
-    document.querySelectorAll(".btn-promo-edit").forEach(btn => {
+    document.querySelectorAll(".btn-promo-edit").forEach((btn) => {
       btn.addEventListener("click", () => editPromo(btn.dataset.id));
     });
-    document.querySelectorAll(".btn-promo-delete").forEach(btn => {
+    document.querySelectorAll(".btn-promo-delete").forEach((btn) => {
       btn.addEventListener("click", () => deletePromo(btn.dataset.id));
     });
   }
@@ -127,7 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = prompt("Judul Promo:");
     if (!title) return;
     const description = prompt("Deskripsi Promo:") || "";
-    await client.from("promos").insert([{ title, description, is_active: true, created_at: new Date(), updated_at: new Date() }]);
+    await client
+      .from("promos")
+      .insert([{ title, description, is_active: true, created_at: new Date(), updated_at: new Date() }]);
     await loadPromos();
   });
 
@@ -155,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const tbody = document.getElementById("products-tbody");
     tbody.innerHTML = "";
-    (data || []).forEach(p => {
+    (data || []).forEach((p) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><img src="${p.image}" alt="${p.name}" style="width:50px;height:50px;"></td>
@@ -172,13 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       tbody.appendChild(tr);
     });
-
-    document.querySelectorAll(".btn-edit").forEach(btn => {
-      btn.addEventListener("click", () => editProduct(btn.dataset.id));
-    });
-    document.querySelectorAll(".btn-delete").forEach(btn => {
-      btn.addEventListener("click", () => deleteProduct(btn.dataset.id));
-    });
   }
 
   // ===== SITE INFO =====
@@ -186,11 +210,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const alamat = document.getElementById("site-alamat").value;
     const wa = document.getElementById("site-wa").value;
     const ongkir_per_km = parseFloat(document.getElementById("site-ongkir").value) || 0;
-    const { data } = await client.from("site_info").select("*").limit(1).single();
-    if (data) {
-      await client.from("site_info").update({ alamat, wa, ongkir_per_km, updated_at: new Date() }).eq("id", data.id);
+    const { data } = await client.from("site_info").select("*").limit(1);
+    const row = data && data.length > 0 ? data[0] : null;
+    if (row) {
+      await client
+        .from("site_info")
+        .update({ alamat, wa, ongkir_per_km, updated_at: new Date() })
+        .eq("id", row.id);
     } else {
-      await client.from("site_info").insert([{ alamat, wa, ongkir_per_km, created_at: new Date(), updated_at: new Date() }]);
+      await client
+        .from("site_info")
+        .insert([{ alamat, wa, ongkir_per_km, created_at: new Date(), updated_at: new Date() }]);
     }
     alert("Informasi Toko tersimpan!");
   });
