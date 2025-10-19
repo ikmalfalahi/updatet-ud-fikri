@@ -40,24 +40,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== DASHBOARD: Status Toko =====
-  async function loadStoreStatus() {
-    const { data: row, error } = await client
-      .from("store_status")
-      .select("*")
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error load store_status:", error.message);
-      return;
-    }
-    if (!row) return;
-
-    document.getElementById("store-status").textContent = `Toko: ${
-      row.is_open ? "Buka" : "Tutup"
-    } | Maintenance: ${row.is_maintenance ? "Aktif" : "Nonaktif"}`;
-    document.getElementById("open-from").value = row.open_from || "";
-    document.getElementById("open-to").value = row.open_to || "";
+ async function loadStoreStatus() {
+  const { data, error } = await client
+    .from("store_status")
+    .select("*")
+    .limit(1)
+    .maybeSingle(); // ⬅️ tambahkan ini
+  if (error) {
+    console.error("Error load store_status:", error.message);
+    return;
   }
+  if (!data) return;
+  document.getElementById("store-status").textContent = `Toko: ${
+    data.is_open ? "Buka" : "Tutup"
+  } | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
+  document.getElementById("open-from").value = data.open_from || "";
+  document.getElementById("open-to").value = data.open_to || "";
+}
 
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
     const { data: row } = await client.from("store_status").select("*").maybeSingle();
@@ -240,3 +239,4 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
+
