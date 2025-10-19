@@ -119,10 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
         .update({ title, description, image, update_at: new Date() })
         .eq("id", row.id);
     } else {
-      await client
-        .from("hero_banner")
-        .insert([{ title, description, image, created_at: new Date(), update_at: new Date() }]);
-    }
+     await client
+  .from("hero_banner")
+  .insert([{ title, description, image, created_at: new Date(), update_at: new Date() }]);
+
     alert("Banner tersimpan!");
   });
 
@@ -239,5 +239,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
+
 
 
