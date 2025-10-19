@@ -18,12 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Sidebar Navigation =====
   document.querySelectorAll(".sidebar ul li[data-section]").forEach((li) => {
     li.addEventListener("click", () => {
-      document
-        .querySelectorAll(".section")
-        .forEach((sec) => sec.classList.remove("active-section"));
-      document
-        .querySelectorAll(".sidebar ul li")
-        .forEach((l) => l.classList.remove("active"));
+      document.querySelectorAll(".section").forEach((sec) => sec.classList.remove("active-section"));
+      document.querySelectorAll(".sidebar ul li").forEach((l) => l.classList.remove("active"));
       const secId = li.dataset.section;
       if (secId) {
         document.getElementById(secId).classList.add("active-section");
@@ -40,23 +36,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== DASHBOARD: Status Toko =====
- async function loadStoreStatus() {
-  const { data, error } = await client
-    .from("store_status")
-    .select("*")
-    .limit(1)
-    .maybeSingle(); // ⬅️ tambahkan ini
-  if (error) {
-    console.error("Error load store_status:", error.message);
-    return;
+  async function loadStoreStatus() {
+    const { data, error } = await client.from("store_status").select("*").maybeSingle();
+    if (error) {
+      console.error("Error load store_status:", error.message);
+      return;
+    }
+    if (!data) return;
+    document.getElementById("store-status").textContent = `Toko: ${
+      data.is_open ? "Buka" : "Tutup"
+    } | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
+    document.getElementById("open-from").value = data.open_from || "";
+    document.getElementById("open-to").value = data.open_to || "";
   }
-  if (!data) return;
-  document.getElementById("store-status").textContent = `Toko: ${
-    data.is_open ? "Buka" : "Tutup"
-  } | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
-  document.getElementById("open-from").value = data.open_from || "";
-  document.getElementById("open-to").value = data.open_to || "";
-}
 
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
     const { data: row } = await client.from("store_status").select("*").maybeSingle();
@@ -92,10 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== HERO/BANNER =====
   async function loadHero() {
-    const { data: row, error } = await client
-      .from("hero_banner")
-      .select("*")
-      .maybeSingle();
+    const { data: row, error } = await client.from("hero_banner").select("*").maybeSingle();
     if (error) {
       console.error("Error load hero_banner:", error.message);
       return;
@@ -115,26 +104,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (row) {
       await client
-  .from("hero_banner")
-  .insert([
-    {
-      title,
-      description,
-      image,
-      created_at: new Date().toISOString(),
-      update_at: new Date().toISOString(),
-    },
-  ]);
- else {
+        .from("hero_banner")
+        .update({
+          title,
+          description,
+          image,
+          update_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+    } else {
+      await client
+        .from("hero_banner")
+        .insert([
+          {
+            title,
+            description,
+            image,
+            created_at: new Date().toISOString(),
+            update_at: new Date().toISOString(),
+          },
+        ]);
+    }
     alert("Banner tersimpan!");
   });
 
   // ===== PROMO / INFO =====
   async function loadPromos() {
-    const { data, error } = await client
-      .from("promos")
-      .select("*")
-      .order("id", { ascending: true });
+    const { data, error } = await client.from("promos").select("*").order("id", { ascending: true });
     if (error) {
       console.error("Error load promos:", error.message);
       return;
@@ -145,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
     (data || []).forEach((p) => {
       const div = document.createElement("div");
       div.innerHTML = `
-        <p><strong>${p.title}</strong>: ${p.description} 
+        <p><strong>${p.title}</strong>: ${p.description}
         <button data-id="${p.id}" class="btn btn-green btn-promo-edit">Edit</button>
         <button data-id="${p.id}" class="btn btn-red btn-promo-delete">Hapus</button></p>
       `;
@@ -242,7 +238,3 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadProducts();
   })();
 });
-
-
-
-
