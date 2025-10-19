@@ -1,17 +1,10 @@
-// ----------------------------
-// Pastikan HTML sudah memuat Supabase JS:
-// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-
 document.addEventListener("DOMContentLoaded", () => {
-  // ----------------------------
-  // Supabase Setup
+  // ===== Supabase Setup =====
   const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2tveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // ----------------------------
-  // Proteksi Login Admin
+  // ===== Proteksi Login =====
   (async () => {
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
@@ -21,15 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
-  // Logout
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.location.href = "kamar-login.html";
-  });
-
-  // ----------------------------
-  // SIDEBAR NAVIGATION
-  document.querySelectorAll(".sidebar ul li").forEach(li => {
+  // ===== Sidebar Navigation =====
+  document.querySelectorAll(".sidebar ul li[data-section]").forEach(li => {
     li.addEventListener("click", () => {
       document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active-section"));
       document.querySelectorAll(".sidebar ul li").forEach(l => l.classList.remove("active"));
@@ -42,12 +28,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ----------------------------
-  // DASHBOARD: Status Toko
+  // ===== Logout =====
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "kamar-login.html";
+  });
+
+  // ===== DASHBOARD: Status Toko =====
   async function loadStoreStatus() {
     const { data } = await supabase.from("store_status").select("*").eq("id", 1).single();
     if (!data) return;
-    document.getElementById("store-status").textContent = `Toko saat ini: ${data.is_open ? "Buka" : "Tutup"} | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
+    document.getElementById("store-status").textContent =
+      `Toko: ${data.is_open ? "Buka" : "Tutup"} | Maintenance: ${data.is_maintenance ? "Aktif" : "Nonaktif"}`;
     document.getElementById("open-from").value = data.open_from || "";
     document.getElementById("open-to").value = data.open_to || "";
   }
@@ -55,13 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-toggle-open").addEventListener("click", async () => {
     const { data } = await supabase.from("store_status").select("*").eq("id", 1).single();
     await supabase.from("store_status").update({ is_open: !data.is_open, updated_at: new Date() }).eq("id", 1);
-    loadStoreStatus();
+    await loadStoreStatus();
   });
 
   document.getElementById("btn-toggle-maint").addEventListener("click", async () => {
     const { data } = await supabase.from("store_status").select("*").eq("id", 1).single();
     await supabase.from("store_status").update({ is_maintenance: !data.is_maintenance, updated_at: new Date() }).eq("id", 1);
-    loadStoreStatus();
+    await loadStoreStatus();
   });
 
   document.getElementById("save-store-hours").addEventListener("click", async () => {
@@ -71,14 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Jam operasional tersimpan!");
   });
 
-  // ----------------------------
-  // HERO/BANNER
+  // ===== HERO/BANNER =====
   async function loadHero() {
     const { data } = await supabase.from("hero_banner").select("*").eq("id", 1).single();
     if (!data) return;
-    document.getElementById("hero-title").value = data.title;
-    document.getElementById("hero-desc").value = data.description;
-    document.getElementById("hero-image").value = data.image;
+    document.getElementById("hero-title").value = data.title || "";
+    document.getElementById("hero-desc").value = data.description || "";
+    document.getElementById("hero-image").value = data.image || "";
   }
 
   document.getElementById("save-hero").addEventListener("click", async () => {
@@ -89,8 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Banner tersimpan!");
   });
 
-  // ----------------------------
-  // PROMO / INFO
+  // ===== PROMO / INFO =====
   async function loadPromos() {
     const { data } = await supabase.from("promos").select("*").order("id", { ascending: true });
     const container = document.getElementById("promo-list");
@@ -118,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!title) return;
     const description = prompt("Deskripsi Promo:") || "";
     await supabase.from("promos").insert([{ title, description, is_active: true, created_at: new Date(), updated_at: new Date() }]);
-    loadPromos();
+    await loadPromos();
   });
 
   async function editPromo(id) {
@@ -127,17 +117,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!title) return;
     const description = prompt("Deskripsi Promo:", p.description);
     await supabase.from("promos").update({ title, description, updated_at: new Date() }).eq("id", id);
-    loadPromos();
+    await loadPromos();
   }
 
   async function deletePromo(id) {
     if (!confirm("Hapus promo ini?")) return;
     await supabase.from("promos").delete().eq("id", id);
-    loadPromos();
+    await loadPromos();
   }
 
-  // ----------------------------
-  // PRODUK
+  // ===== PRODUK =====
   async function loadProducts() {
     const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
     const tbody = document.getElementById("products-tbody");
@@ -145,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     data.forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><img src="${p.image}" style="width:50px; height:50px; object-fit:cover;"></td>
+        <td><img src="${p.image}" alt="${p.name}"></td>
         <td>${p.name}</td>
         <td>${p.category || "-"}</td>
         <td>Rp ${p.price}</td>
@@ -179,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const stock = parseInt(prompt("Stok:") || 0);
     const image = prompt("URL Gambar:") || "";
     await supabase.from("products").insert([{ name, description, category, price, promo_price, promo_min_qty, stock, image, is_active: true, created_at: new Date(), updated_at: new Date() }]);
-    loadProducts();
+    await loadProducts();
   });
 
   async function editProduct(id) {
@@ -195,17 +184,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const is_active = confirm("Aktifkan produk?");
     const image = prompt("URL Gambar:", p.image);
     await supabase.from("products").update({ name, description, category, price, promo_price, promo_min_qty, stock, is_active, image, updated_at: new Date() }).eq("id", id);
-    loadProducts();
+    await loadProducts();
   }
 
   async function deleteProduct(id) {
     if (!confirm("Hapus produk ini?")) return;
     await supabase.from("products").delete().eq("id", id);
-    loadProducts();
+    await loadProducts();
   }
 
-  // ----------------------------
-  // SITE INFO & ONGKIR
+  // ===== SITE INFO =====
   document.getElementById("save-siteinfo").addEventListener("click", async () => {
     const alamat = document.getElementById("site-alamat").value;
     const wa = document.getElementById("site-wa").value;
@@ -214,8 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("Informasi Toko tersimpan!");
   });
 
-  // ----------------------------
-  // INIT
+  // ===== INIT LOAD =====
   (async () => {
     await loadStoreStatus();
     await loadHero();
