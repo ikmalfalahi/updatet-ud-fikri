@@ -1,7 +1,11 @@
+// --------------------------------------
+// CONFIG SUPABASE
 const SUPABASE_URL = "https://YOUR_SUPABASE_URL.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR_PUBLIC_ANON_KEY";
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// --------------------------------------
+// SECTION SWITCH
 const sections = document.querySelectorAll(".section");
 document.querySelectorAll(".sidebar ul li[data-section]").forEach(li => {
   li.addEventListener("click", () => {
@@ -13,6 +17,7 @@ document.querySelectorAll(".sidebar ul li[data-section]").forEach(li => {
   });
 });
 
+// --------------------------------------
 // STORE STATUS
 const storeStatusEl = document.getElementById("store-status");
 const btnToggleOpen = document.getElementById("btn-toggle-open");
@@ -44,8 +49,10 @@ document.getElementById("save-store-hours").addEventListener("click", async ()=>
   alert("Jam toko tersimpan!");
 });
 
+// --------------------------------------
 // PRODUCT CRUD
 const productsTbody = document.getElementById("products-tbody");
+
 async function loadProducts() {
   const { data } = await supabase.from("products").select("*");
   productsTbody.innerHTML = "";
@@ -53,11 +60,11 @@ async function loadProducts() {
   data.forEach(p=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td><img src="${p.image}" width="50"/></td>
+      <td><img src="${p.image || ''}" width="50"/></td>
       <td>${p.name}</td>
-      <td>${p.category}</td>
-      <td>${p.price}</td>
-      <td>${p.stock}</td>
+      <td>${p.category || ''}</td>
+      <td>${p.price || 0}</td>
+      <td>${p.stock || 0}</td>
       <td>${p.is_active ? "Aktif":"Nonaktif"}</td>
       <td>
         <button class="btn-edit" data-id="${p.id}">Edit</button>
@@ -66,7 +73,54 @@ async function loadProducts() {
     `;
     productsTbody.appendChild(tr);
   });
+
+  // Edit
+  document.querySelectorAll(".btn-edit").forEach(btn=>{
+    btn.addEventListener("click", ()=> editProduct(btn.dataset.id));
+  });
+
+  // Delete
+  document.querySelectorAll(".btn-delete").forEach(btn=>{
+    btn.addEventListener("click", ()=> deleteProduct(btn.dataset.id));
+  });
 }
 
+// Tambah produk baru
+document.getElementById("btn-new-product").addEventListener("click", ()=> {
+  const name = prompt("Nama Produk:");
+  if(!name) return;
+  const category = prompt("Kategori:");
+  const price = parseFloat(prompt("Harga:")) || 0;
+  const stock = parseInt(prompt("Stok:")) || 0;
+  const image = prompt("URL Gambar (opsional):") || "";
+
+  supabase.from("products").insert([{name, category, price, stock, image, is_active:true, created_at:new Date(), updated_at:new Date()}])
+    .then(res=>{ loadProducts(); alert("Produk ditambahkan!"); })
+    .catch(err=>alert(err.message));
+});
+
+// Edit produk
+async function editProduct(id) {
+  const { data: p } = await supabase.from("products").select("*").eq("id",id).single();
+  const name = prompt("Nama Produk:", p.name);
+  if(!name) return;
+  const category = prompt("Kategori:", p.category);
+  const price = parseFloat(prompt("Harga:", p.price)) || 0;
+  const stock = parseInt(prompt("Stok:", p.stock)) || 0;
+  const is_active = confirm("Aktifkan produk? (OK=Aktif, Cancel=Nonaktif)");
+  const image = prompt("URL Gambar:", p.image) || "";
+
+  await supabase.from("products").update({name, category, price, stock, is_active, image, updated_at:new Date()}).eq("id",id);
+  loadProducts();
+}
+
+// Hapus produk
+async function deleteProduct(id) {
+  if(!confirm("Hapus produk ini?")) return;
+  await supabase.from("products").delete().eq("id",id);
+  loadProducts();
+}
+
+// Load awal
 loadStoreStatus();
 loadProducts();
