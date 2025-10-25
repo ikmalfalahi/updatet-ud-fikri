@@ -1,13 +1,89 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Checkout Success</title></head>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pemesanan Berhasil | UD Fikri</title>
+  <link rel="icon" href="images/logo.png" />
+  <link rel="stylesheet" href="css/checkout-success.css">
+</head>
 <body>
-  <h1>Terima kasih! Pesananmu sudah dibuat.</h1>
-  <div id="orderId"></div>
+  <div class="success-container">
+    <div class="checkmark">
+      <svg viewBox="0 0 52 52">
+        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+        <path class="checkmark-check" fill="none" d="M14 27l7 7 16-16"/>
+      </svg>
+    </div>
+    <h1>Pesanan Berhasil 🎉</h1>
+    <p>Terima kasih sudah berbelanja di <strong>UD Fikri</strong>!</p>
+
+    <div id="order-summary" class="order-summary">
+      <p>Memuat detail pesanan...</p>
+    </div>
+
+    <button class="btn-home" onclick="window.location.href='index.html'">🏠 Kembali ke Beranda</button>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    const params = new URLSearchParams(location.search);
-    const id = params.get('order');
-    document.getElementById('orderId').textContent = id ? `Order ID: ${id}` : 'Tidak ada order id';
+    const supabaseUrl = "https://ucizdtqovtajqjkgoyef.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    const orderSummaryEl = document.getElementById("order-summary");
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get("order");
+
+    async function loadOrder() {
+      if (!orderId) {
+        orderSummaryEl.innerHTML = `<p>Order tidak ditemukan.</p>`;
+        return;
+      }
+
+      const { data: order, error } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          customer_name,
+          total,
+          subtotal,
+          discount_amount,
+          shipping_cost,
+          promo_code,
+          created_at,
+          order_items (product_name, qty, unit_price)
+        `)
+        .eq("id", orderId)
+        .maybeSingle();
+
+      if (error || !order) {
+        orderSummaryEl.innerHTML = `<p>Gagal memuat data pesanan.</p>`;
+        return;
+      }
+
+      const itemsHtml = order.order_items.map(i => `
+        <div class="item">
+          <span>${i.product_name} × ${i.qty}</span>
+          <span>Rp ${(i.unit_price * i.qty).toLocaleString("id-ID")}</span>
+        </div>
+      `).join("");
+
+      orderSummaryEl.innerHTML = `
+        <h2>ID Pesanan: #${order.id}</h2>
+        <p><strong>Nama:</strong> ${order.customer_name}</p>
+        <p><strong>Tanggal:</strong> ${new Date(order.created_at).toLocaleString("id-ID")}</p>
+        <div class="items">${itemsHtml}</div>
+        <hr>
+        <p>Subtotal: Rp ${order.subtotal.toLocaleString("id-ID")}</p>
+        <p>Diskon: -Rp ${order.discount_amount.toLocaleString("id-ID")}</p>
+        <p>Ongkir: Rp ${order.shipping_cost.toLocaleString("id-ID")}</p>
+        <h3>Total: Rp ${order.total.toLocaleString("id-ID")}</h3>
+        ${order.promo_code ? `<p>Kode Promo: <strong>${order.promo_code}</strong></p>` : ""}
+      `;
+    }
+
+    loadOrder();
   </script>
 </body>
 </html>
