@@ -3,41 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produk | UD Fikri</title>
-  <link rel="stylesheet" href="css/produk.css">
-  <link rel="icon" type="image/png" href="images/logo.png">
+  <title>Produk - UD Fikri</title>
+  <link rel="stylesheet" href="css/cart.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header class="header">
-    <div class="logo">🛒 <strong>UD FIKRI</strong></div>
-    <nav>
-      <a href="index.html">Beranda</a>
-      <a href="cart.html">Keranjang 🛍️</a>
-    </nav>
+  <header class="topbar">
+    <div class="logo">UD Fikri</div>
+    <nav><a href="index.html">Beranda</a> · <a href="cart.html">Keranjang (<span id="cartCount">0</span>)</a></nav>
   </header>
 
-  <section class="filter-bar">
-    <input type="text" id="searchInput" placeholder="Cari produk... 🔍">
-    <select id="categoryFilter">
-      <option value="">Semua Kategori</option>
-      <option value="beras">Beras</option>
-      <option value="minyak">Minyak</option>
-      <option value="gula">Gula</option>
-      <option value="lainnya">Lainnya</option>
-    </select>
-  </section>
-
-  <main>
-    <div id="product-list" class="product-grid">
-      <p class="loading">🌀 Memuat produk...</p>
-    </div>
+  <main class="products-page">
+    <h2>Produk Kami</h2>
+    <div id="product-list" class="product-list">Memuat produk...</div>
   </main>
 
-  <footer>
-    <p>© 2025 UD Fikri. Semua Hak Dilindungi.</p>
-  </footer>
+  <script>
+    const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <script src="js/produk.js"></script>
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const cartCountEl = document.getElementById("cartCount");
+
+    const formatRp = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+
+    function updateCartCount() {
+      cartCountEl.textContent = cart.reduce((s, i) => s + i.qty, 0);
+    }
+
+    function calculatePrice(item, qty=1) {
+      let price = Number(item.price);
+      if (item.discount_type === "percent") price -= price * (item.discount_value/100);
+      if (item.discount_type === "fixed") price -= item.discount_value;
+      if (item.tiered_discounts) {
+        const tiers = JSON.parse(item.tiered_discounts);
+        const tier = tiers.filter(t => qty >= t.min).sort((a,b)=>b.min-a.min)[0];
+        if (tier) price = tier.price;
+      }
+      return Math.max(0, price);
+    }
+
+    function addToCart(product) {
+      const idx = cart.findIndex(i=>i.id===product.id);
+      if(idx!==-1) cart[idx].qty +=1;
+      else cart.push({...product, qty:1, price_snapshot: calculatePrice(product,1)});
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartCount();
+      alert(`${product.name} berhasil ditambahkan ke keranjang ✅`);
+    }
+
+    async function loadProducts() {
+      const { data: products, error } = await supabase.from("products").select("*").order("created_at", {ascending:false});
+      if(error) { console.error(error); document.getElementById("product-list").innerHTML="Gagal memuat produk"; return; }
+      const html = products.map(p => {
+        const price = calculatePrice(p);
+        return `
+          <div class="cart-item">
+            <img src="${p.image_url || 'images/default-product.png'}" alt="${p.name}">
+            <div class="cart-info">
+              <h4>${p.name}</h4>
+              ${p.discount_value ? `<p class="old">${formatRp(p.price)}</p>` : ""}
+              <p class="price">${formatRp(price)}</p>
+              <button onclick='addToCart(${JSON.stringify(p)})'>🛒 Tambah ke Keranjang</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+      document.getElementById("product-list").innerHTML = html;
+    }
+
+    loadProducts();
+    updateCartCount();
+  </script>
 </body>
 </html>
