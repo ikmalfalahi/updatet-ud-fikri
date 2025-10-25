@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk | UD Fikri</title>
+  <link rel="stylesheet" href="css/produk.css">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">🛒 <strong>UD FIKRI</strong></div>
+    <nav>
+      <a href="index.html">Beranda</a>
+      <a href="keranjang.html">Keranjang 🛍️</a>
+    </nav>
+  </header>
+
+  <section class="filter-bar">
+    <input type="text" id="searchInput" placeholder="Cari produk... 🔍">
+    <select id="categoryFilter">
+      <option value="">Semua Kategori</option>
+      <option value="beras">Beras</option>
+      <option value="minyak">Minyak</option>
+      <option value="gula">Gula</option>
+      <option value="lainnya">Lainnya</option>
+    </select>
+  </section>
+
+  <main>
+    <div id="product-list" class="product-grid">
+      <p class="loading">🌀 Memuat produk...</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 UD Fikri. Semua Hak Dilindungi.</p>
+  </footer>
+
+  <script src="js/produk.js"></script>
+</body>
+</html>
