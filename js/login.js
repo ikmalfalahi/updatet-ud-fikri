@@ -1,76 +1,48 @@
-// Tunggu halaman & Supabase siap
-document.addEventListener("DOMContentLoaded", async () => {
+// ===== Config Supabase =====
+const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaXpkdHFvdnRhanFqa2dveWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MTU5NjAsImV4cCI6MjA3NjM5MTk2MH0.c4CfIOGV6HqSTT_GkCZTSxjYfv5YmCHOMuMpXreRX8I"; // <-- ganti dengan anon key
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // === Toggle Password Visibility ===
-  function togglePassword() {
-    const passField = document.getElementById("password");
-    passField.type = passField.type === "password" ? "text" : "password";
+// ===== Elemen DOM =====
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const loginMsg = document.getElementById('loginMsg');
+
+// ===== Fungsi Login =====
+loginBtn.addEventListener('click', async () => {
+  loginMsg.textContent = '';
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    loginMsg.textContent = 'Email dan password wajib diisi.';
+    return;
   }
-  window.togglePassword = togglePassword; // supaya bisa dipakai di HTML onclick
 
-  // Tunggu sampai Supabase sudah dimuat
-  let supabaseClientReady = false;
-  const checkSupabase = setInterval(() => {
-    if (window.supabase) {
-      clearInterval(checkSupabase);
-      supabaseClientReady = true;
-      initLogin(); // mulai proses login setelah supabase siap
-    }
-  }, 100);
+  loginBtn.disabled = true;
+  loginMsg.textContent = 'Memproses login...';
 
-  function initLogin() {
-    // === Inisialisasi Supabase ===
-    const supabaseUrl = "https://nnohtnywmhuzueamsats.supabase.co";
-    const supabaseKey =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ub2h0bnl3bWh1enVlYW1zYXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNjM4NDksImV4cCI6MjA3NDYzOTg0OX0.S8FeDIdXQ32WH9QPVlSsYGRjxYbLMg6HXQicZ35A1pg";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    // === Login Handler ===
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const remember = document.getElementById("remember").checked;
-
-      if (!email || !password) {
-        alert("Email dan password wajib diisi!");
-        return;
-      }
-
-      try {
-        // === Cek di tabel 'admin_users' ===
-        const { data, error } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("email", email)
-          .single();
-        
-        if (error || !data) {
-          alert("Email tidak ditemukan!");
-          return;
-        }
-        
-        if (data.password !== password) {
-          alert("Password salah!");
-          return;
-        }
-
-       // === Simpan sesi login ===
-        if (remember) {
-          localStorage.setItem("admin_logged_in", "true");
-        } else {
-          sessionStorage.setItem("admin_logged_in", "true");
-        }
-
-
-        alert("Login berhasil! Mengarahkan ke halaman admin...");
-        window.location.href = "kamar.html";
-
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("Terjadi kesalahan. Coba lagi nanti.");
-      }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
+
+    if (error) {
+      loginMsg.textContent = 'Login gagal: ' + error.message;
+      console.error(error);
+    } else {
+      loginMsg.textContent = 'Login berhasil! Mengalihkan...';
+      // Redirect ke halaman produk setelah login
+      setTimeout(() => {
+        window.location.href = 'produk.html';
+      }, 1000);
+    }
+  } catch (err) {
+    console.error(err);
+    loginMsg.textContent = 'Terjadi kesalahan saat login.';
+  } finally {
+    loginBtn.disabled = false;
   }
 });
