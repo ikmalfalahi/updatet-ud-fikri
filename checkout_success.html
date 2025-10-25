@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Checkout Success</title></head>
+<body>
+  <h1>Terima kasih! Pesananmu sudah dibuat.</h1>
+  <div id="orderId"></div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('order');
+    document.getElementById('orderId').textContent = id ? `Order ID: ${id}` : 'Tidak ada order id';
+  </script>
+</body>
+</html>
