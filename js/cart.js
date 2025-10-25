@@ -166,10 +166,13 @@ async function applyPromo(){
   }
 }
 
-// ===== Checkout: create order in Supabase =====
-async function checkout(){
+// ===== Checkout pakai Edge Function Supabase =====
+async function checkout() {
   checkoutMsg.textContent = "";
-  if (!cart || cart.length === 0) { checkoutMsg.textContent = "Keranjang kosong."; return; }
+  if (!cart || cart.length === 0) {
+    checkoutMsg.textContent = "Keranjang kosong.";
+    return;
+  }
 
   const name = shippingName.value.trim();
   const phone = shippingPhone.value.trim();
@@ -182,67 +185,61 @@ async function checkout(){
   }
 
   checkoutBtn.disabled = true;
-  checkoutMsg.textContent = "Membuat pesanan...";
+  checkoutMsg.textContent = "⏳ Memproses pesanan...";
 
   try {
-    const subtotal = cart.reduce((s,i)=> s + Number(i.price_snapshot)*Number(i.qty), 0);
+    const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
     const discount = appliedPromo ? appliedPromo.discount : 0;
     const shipping = estimateShipping(subtotal);
     const total = Math.max(0, subtotal - discount + shipping);
 
-    // Insert order
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .insert([{
-        customer_name: name,
-        customer_phone: phone,
-        shipping_address: address,
-        shipping_city: city,
-        shipping_cost: shipping,
-        subtotal: subtotal,
-        discount_amount: discount,
-        total: total,
-        promo_code: appliedPromo ? appliedPromo.promo.code : null,
-      }])
-      .select()
-      .maybeSingle();
+    const payload = {
+      customer_name: name,
+      customer_phone: phone,
+      shipping_address: address,
+      shipping_city: city,
+      shipping_cost: shipping,
+      subtotal,
+      discount_amount: discount,
+      total,
+      promo_code: appliedPromo ? appliedPromo.promo.code : null,
+      items: cart.map((ci) => ({
+        product_id: ci.id,
+        product_name: ci.name,
+        qty: ci.qty,
+        unit_price: ci.price_snapshot,
+      })),
+    };
 
-    if (orderErr || !order) {
-      throw orderErr || new Error("Gagal buat order.");
+    const response = await fetch(
+      "https://nnohtnywmhuzueamsats.functions.supabase.co/checkout",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const json = await response.json();
+    console.log("Checkout response:", json);
+
+    if (!response.ok) {
+      throw new Error(json.error || "Gagal membuat pesanan di server.");
     }
 
-    // Insert order items
-    const itemsToInsert = cart.map(ci => ({
-      order_id: order.id,
-      product_id: ci.id,
-      product_name: ci.name,
-      qty: ci.qty,
-      unit_price: ci.price_snapshot,
-      subtotal: Number(ci.price_snapshot) * Number(ci.qty)
-    }));
+    localStorage.removeItem("cart");
+    cart = [];
+    renderCart();
+    appliedPromo = null;
+    promoInput.value = "";
+    checkoutMsg.textContent = "✅ Pesanan berhasil dibuat!";
 
-    const { error: itemsErr } = await supabase.from("order_items").insert(itemsToInsert);
-    if (itemsErr) {
-      // NOTE: jika mau rollback, buat logic di server. Di client ini kita informasikan.
-      console.error(itemsErr);
-      checkoutMsg.textContent = "Pesanan dibuat, tetapi gagal menyimpan item (cek log).";
-    } else {
-      // clear cart
-      localStorage.removeItem("cart");
-      cart = [];
-      renderCart();
-      appliedPromo = null;
-      promoInput.value = "";
-      checkoutMsg.textContent = "Pesanan berhasil dibuat! ID: " + order.id;
-      // redirect atau tampilkan instruksi pembayaran
-      setTimeout(()=> {
-        window.location.href = `checkout-success.html?order=${order.id}`;
-      }, 1200);
-    }
-
-  } catch (err){
+    setTimeout(() => {
+      window.location.href = `checkout-success.html?order=${json.order_id}`;
+    }, 1200);
+  } catch (err) {
     console.error(err);
-    checkoutMsg.textContent = "Gagal proses checkout: " + (err.message || err);
+    checkoutMsg.textContent = "⚠️ Gagal proses checkout: " + err.message;
   } finally {
     checkoutBtn.disabled = false;
   }
