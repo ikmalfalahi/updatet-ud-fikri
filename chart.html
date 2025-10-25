@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Keranjang - UD Fikri</title>
+  <link rel="stylesheet" href="css/cart.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">UD FIKRI</div>
+    <nav><a href="produk.html">Belanja</a> · <a href="produk.html">Produk</a></nav>
+  </header>
+
+  <main class="cart-page">
+    <section class="cart-left">
+      <h2>Keranjang Belanja</h2>
+      <div id="cart-list" class="cart-list">
+        <p class="empty">Memuat keranjang...</p>
+      </div>
+      <div class="promo-box">
+        <input id="promoCode" placeholder="Masukkan kode promo (contoh: BF2025)" />
+        <button id="applyPromoBtn">Terapkan</button>
+        <p id="promoMsg" class="promo-msg"></p>
+      </div>
+    </section>
+
+    <aside class="cart-right">
+      <div class="summary-card">
+        <h3>Ringkasan Pesanan</h3>
+        <div class="line"><span>Subtotal</span><span id="subtotalTxt">Rp 0</span></div>
+        <div class="line"><span>Diskon</span><span id="discountTxt">- Rp 0</span></div>
+        <div class="line"><span>Estimasi Ongkir</span><span id="shippingTxt">Rp 0</span></div>
+        <div class="line total"><span>Total</span><span id="totalTxt">Rp 0</span></div>
+
+        <div class="shipping-form">
+          <input id="shippingName" placeholder="Nama penerima" />
+          <input id="shippingPhone" placeholder="No. HP" />
+          <textarea id="shippingAddress" placeholder="Alamat lengkap"></textarea>
+          <select id="shippingCity">
+            <option value="">Pilih Kota</option>
+            <option value="Jakarta">Jakarta</option>
+            <option value="Bandung">Bandung</option>
+            <option value="Surabaya">Surabaya</option>
+          </select>
+        </div>
+
+        <button id="checkoutBtn" class="checkout-btn">Checkout & Buat Pesanan</button>
+        <p id="checkoutMsg" class="checkout-msg"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site-footer">© 2025 UD Fikri</footer>
+
+  <script src="js/cart.js"></script>
+</body>
+</html>
