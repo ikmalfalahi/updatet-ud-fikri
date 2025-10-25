@@ -5,7 +5,7 @@ const SUPABASE_KEY =
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===== Elemen DOM =====
-const cartListEl = document.getElementById("cart-items");
+const cartListEl = document.getElementById("cart-list");
 const subtotalTxt = document.getElementById("subtotalTxt");
 const discountTxt = document.getElementById("discountTxt");
 const shippingTxt = document.getElementById("shippingTxt");
@@ -15,10 +15,10 @@ const promoInput = document.getElementById("promoCode");
 const applyPromoBtn = document.getElementById("applyPromoBtn");
 const promoMsg = document.getElementById("promoMsg");
 const checkoutBtn = document.getElementById("checkoutBtn");
-const checkoutWA = document.getElementById("checkoutWA");
 const checkoutMsg = document.getElementById("checkoutMsg");
 
 const shippingName = document.getElementById("shippingName");
+const shippingEmail = document.getElementById("shippingEmail"); // optional
 const shippingPhone = document.getElementById("shippingPhone");
 const shippingAddress = document.getElementById("shippingAddress");
 const shippingCity = document.getElementById("shippingCity");
@@ -34,30 +34,26 @@ const saveCart = () => localStorage.setItem("cart", JSON.stringify(cart));
 
 // ===== RENDER CART =====
 function renderCart() {
-  if (cart.length === 0) {
+  if (!cart.length) {
     cartListEl.innerHTML = `<p class="empty">🛒 Keranjang masih kosong</p>`;
     recalcTotals();
     return;
   }
 
   cartListEl.innerHTML = cart
-    .map((item) => {
-      let finalPrice = Number(item.price_snapshot);
-      if (item.discount) finalPrice -= (finalPrice * item.discount) / 100;
-      const subtotal = finalPrice * item.qty;
+    .map(item => {
+      const price = calculateItemPrice(item);
+      const subtotal = price * item.qty;
       return `
         <div class="cart-item" data-id="${item.id}">
-          <img src="${item.image_url || "images/default-product.png"}" alt="${item.name}">
+          <img src="${item.image_url || 'images/default-product.png'}" alt="${item.name}">
           <div class="cart-info">
             <h4>${item.name}</h4>
-            ${item.discount ? `<p class="old">${formatRp(item.price_snapshot)}</p>` : ""}
-            <p class="price">${formatRp(finalPrice)}</p>
-            <p class="desc">${item.description || ""}</p>
+            ${item.discount_type ? `<p class="old">${formatRp(item.price_snapshot)}</p>` : ""}
+            <p class="price">${formatRp(price)}</p>
             <div class="qty-row">
               <label>Qty:</label>
-              <button class="qty-btn minus">-</button>
               <input type="number" class="qty-input" min="1" value="${item.qty}" data-id="${item.id}">
-              <button class="qty-btn plus">+</button>
               <button class="remove-btn" data-id="${item.id}">🗑 Hapus</button>
             </div>
             <p class="subtotal">Subtotal: <strong>${formatRp(subtotal)}</strong></p>
@@ -67,34 +63,14 @@ function renderCart() {
     })
     .join("");
 
-  // Event listeners
-  document.querySelectorAll(".qty-input").forEach((el) => {
-    el.addEventListener("change", (e) => {
+  document.querySelectorAll(".qty-input").forEach(el => {
+    el.addEventListener("change", e => {
       const id = e.target.dataset.id;
       updateQty(id, parseInt(e.target.value) || 1);
     });
   });
-
-  document.querySelectorAll(".qty-btn.minus").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const input = e.target.nextElementSibling;
-      const id = input.dataset.id;
-      let val = parseInt(input.value) || 1;
-      if (val > 1) updateQty(id, val - 1);
-    });
-  });
-
-  document.querySelectorAll(".qty-btn.plus").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const input = e.target.previousElementSibling;
-      const id = input.dataset.id;
-      let val = parseInt(input.value) || 1;
-      updateQty(id, val + 1);
-    });
-  });
-
-  document.querySelectorAll(".remove-btn").forEach((b) => {
-    b.addEventListener("click", (e) => {
+  document.querySelectorAll(".remove-btn").forEach(b => {
+    b.addEventListener("click", e => {
       removeItem(e.target.dataset.id);
     });
   });
@@ -102,26 +78,32 @@ function renderCart() {
   recalcTotals();
 }
 
-// ===== Update Qty =====
+// ===== Calculate Item Price with Discount =====
+function calculateItemPrice(item) {
+  let price = Number(item.price_snapshot || item.price);
+  if (item.discount_type === "percent") price -= price * (item.discount_value / 100);
+  if (item.discount_type === "fixed") price -= item.discount_value;
+  // tiered discount
+  if (item.tiered_discounts) {
+    const tiers = JSON.parse(item.tiered_discounts);
+    const tier = tiers
+      .filter(t => item.qty >= t.min)
+      .sort((a, b) => b.min - a.min)[0];
+    if (tier) price = tier.price;
+  }
+  return Math.max(0, price);
+}
+
+// ===== Update Qty & Remove =====
 function updateQty(id, qty) {
-  const idx = cart.findIndex((i) => i.id == id);
+  const idx = cart.findIndex(i => i.id === id);
   if (idx === -1) return;
   cart[idx].qty = qty;
   saveCart();
-
-  const cartItemEl = document.querySelector(`.cart-item[data-id="${id}"]`);
-  if (cartItemEl) {
-    const subtotalEl = cartItemEl.querySelector(".subtotal strong");
-    subtotalEl.classList.add("subtotal-updated");
-    setTimeout(() => subtotalEl.classList.remove("subtotal-updated"), 300);
-  }
-
   renderCart();
 }
-
-// ===== Remove Item =====
 function removeItem(id) {
-  cart = cart.filter((i) => i.id != id);
+  cart = cart.filter(i => i.id !== id);
   saveCart();
   renderCart();
 }
@@ -133,15 +115,10 @@ function estimateShipping(subtotal) {
   return 15000;
 }
 
-// ===== Totals =====
+// ===== Recalculate Totals =====
 function recalcTotals() {
   let subtotal = 0;
-  cart.forEach((i) => {
-    let price = i.price_snapshot;
-    if (i.discount) price -= (price * i.discount) / 100;
-    subtotal += price * i.qty;
-  });
-
+  cart.forEach(i => subtotal += calculateItemPrice(i) * i.qty);
   let discount = appliedPromo ? appliedPromo.discount : 0;
   shippingCost = estimateShipping(subtotal);
   const total = Math.max(0, subtotal - discount + shippingCost);
@@ -152,15 +129,14 @@ function recalcTotals() {
   totalTxt.textContent = formatRp(total);
 }
 
-// ===== Promo Apply =====
+// ===== Apply Promo =====
 async function applyPromo() {
   const code = promoInput.value.trim();
   promoMsg.textContent = "";
-  if (!code) return (promoMsg.textContent = "Masukkan kode promo.");
+  if (!code) return promoMsg.textContent = "Masukkan kode promo.";
 
   applyPromoBtn.disabled = true;
   promoMsg.textContent = "Memeriksa...";
-
   try {
     const { data: promo, error } = await supabase
       .from("promotions")
@@ -168,23 +144,21 @@ async function applyPromo() {
       .eq("code", code)
       .maybeSingle();
 
-    if (error || !promo || !promo.active)
-      return (promoMsg.textContent = "Kode promo tidak valid.");
+    if (error || !promo || !promo.active) return promoMsg.textContent = "Kode promo tidak valid.";
 
     const now = new Date();
-    if (
-      (promo.starts_at && new Date(promo.starts_at) > now) ||
-      (promo.ends_at && new Date(promo.ends_at) < now)
-    )
-      return (promoMsg.textContent = "Voucher belum aktif / kadaluwarsa.");
+    if ((promo.starts_at && new Date(promo.starts_at) > now) ||
+        (promo.ends_at && new Date(promo.ends_at) < now)) {
+      return promoMsg.textContent = "Voucher belum aktif / kadaluwarsa.";
+    }
 
-    const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
-    if (promo.min_total && subtotal < promo.min_total)
-      return (promoMsg.textContent = `Minimal pembelian ${formatRp(promo.min_total)}`);
+    const subtotal = cart.reduce((s, i) => s + calculateItemPrice(i) * i.qty, 0);
+    if (promo.min_total && subtotal < promo.min_total) return promoMsg.textContent = `Minimal pembelian ${formatRp(promo.min_total)}`;
 
     let discount = 0;
     if (promo.type === "percent") discount = subtotal * (promo.value / 100);
     if (promo.type === "fixed") discount = promo.value;
+    if (promo.type === "shipping") shippingCost = 0; // free shipping
 
     appliedPromo = { promo, discount };
     promoMsg.textContent = `Diskon ${formatRp(discount)} diterapkan ✅`;
@@ -200,65 +174,46 @@ async function applyPromo() {
 // ===== Checkout =====
 async function checkout() {
   checkoutMsg.textContent = "";
-  if (cart.length === 0) return (checkoutMsg.textContent = "Keranjang kosong.");
+  if (!cart.length) return checkoutMsg.textContent = "Keranjang kosong.";
 
   const name = shippingName.value.trim();
+  const email = shippingEmail?.value.trim() || "";
   const phone = shippingPhone.value.trim();
   const address = shippingAddress.value.trim();
   const city = shippingCity.value.trim();
 
   if (!name || !phone || !address || !city)
-    return (checkoutMsg.textContent = "Lengkapi data pengiriman.");
+    return checkoutMsg.textContent = "Lengkapi data pengiriman.";
 
   checkoutBtn.disabled = true;
   checkoutMsg.textContent = "Membuat pesanan...";
 
   try {
-    const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
-    const discount = appliedPromo ? appliedPromo.discount : 0;
-    const shipping = estimateShipping(subtotal);
-    const total = Math.max(0, subtotal - discount + shipping);
-
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .insert([
-        {
-          customer_name: name,
-          customer_phone: phone,
-          shipping_address: address,
-          shipping_city: city,
-          subtotal,
-          discount_amount: discount,
-          shipping_cost: shipping,
-          total,
-          promo_code: appliedPromo ? appliedPromo.promo.code : null,
-        },
-      ])
-      .select()
-      .maybeSingle();
-
-    if (orderErr || !order) throw orderErr;
-
-    const itemsToInsert = cart.map((ci) => ({
-      order_id: order.id,
-      product_id: ci.id,
-      product_name: ci.name,
-      qty: ci.qty,
-      unit_price: ci.price_snapshot,
-      subtotal: Number(ci.price_snapshot) * Number(ci.qty),
+    const items = cart.map(i => ({
+      id: i.id,
+      qty: i.qty,
+      price_snapshot: calculateItemPrice(i)
     }));
+    const orderPayload = {
+      customer_name: name,
+      customer_email: email,
+      customer_phone: phone,
+      shipping_address: address,
+      shipping_city: city,
+      shipping_cost: shippingCost,
+      items,
+      promo_code: appliedPromo?.promo?.code || null
+    };
 
-    const { error: itemsErr } = await supabase.from("order_items").insert(itemsToInsert);
-    if (itemsErr) throw itemsErr;
+    const { data: orderId, error } = await supabase.rpc('create_order', { order_json: orderPayload });
+    if (error) throw error;
 
     localStorage.removeItem("cart");
     cart = [];
     renderCart();
     promoInput.value = "";
     checkoutMsg.textContent = "Pesanan berhasil dibuat! ✅";
-    setTimeout(() => {
-      window.location.href = `checkout-success.html?order=${order.id}`;
-    }, 1000);
+    setTimeout(() => window.location.href = `checkout-success.html?order=${orderId}`, 1000);
   } catch (err) {
     console.error(err);
     checkoutMsg.textContent = "Gagal checkout: " + err.message;
@@ -267,25 +222,9 @@ async function checkout() {
   }
 }
 
-// ===== Checkout via WhatsApp =====
-checkoutWA?.addEventListener("click", () => {
-  if (cart.length === 0) return alert("Keranjang kosong!");
-
-  let msg = "🛒 *Pesanan UD Fikri* 🛒\n\n";
-  cart.forEach((i) => {
-    let price = i.price_snapshot;
-    if (i.discount) price -= (price * i.discount) / 100;
-    msg += `${i.name} x${i.qty} = ${formatRp(price * i.qty)}\n`;
-  });
-  const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
-  msg += `\nTotal: ${formatRp(subtotal)}\nNama: ${shippingName.value}\nAlamat: ${shippingAddress.value}\nKota: ${shippingCity.value}\nTelp: ${shippingPhone.value}`;
-  const waLink = `https://wa.me/62xxxxxx?text=${encodeURIComponent(msg)}`;
-  window.open(waLink, "_blank");
-});
-
 // ===== Event Bindings =====
 applyPromoBtn?.addEventListener("click", applyPromo);
 checkoutBtn?.addEventListener("click", checkout);
 
-// ===== Init =====
+// Init
 renderCart();
