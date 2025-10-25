@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kamar-udfikri</title>
+  <link rel="stylesheet" href="css/kamar.css">
+</head>
+<body>
+   <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Cek apakah admin sudah login
+    const isLoggedIn =
+      localStorage.getItem("admin_logged_in") === "true" ||
+      sessionStorage.getItem("admin_logged_in") === "true";
+
+    console.log("Login status:", isLoggedIn); // Debug
+
+    if (!isLoggedIn) {
+      console.warn("Belum login, mengarahkan ke login.html...");
+      window.location.replace("login.html");
+      return;
+    }
+
+    console.log("Sudah login, tetap di halaman kamar.html");
+  });
+</script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const isLoggedIn =
+      localStorage.getItem("admin_logged_in") === "true" ||
+      sessionStorage.getItem("admin_logged_in") === "true";
+
+    if (!isLoggedIn) {
+      window.location.replace("login.html");
+      return;
+    }
+  });
+</script>
+
+  <div class="container">
+    <h1>KAMAR UD-FIKRI</h1>
+    <div id="admin-status" class="store-status">Silahkan Pilih</div>
+    <div class="buttons">
+      <button class="btn btn-open" onclick="setStore(true)">🟢 Buka Toko</button>
+      <button class="btn btn-close" onclick="setStore(false)">🔴 Tutup Toko</button>
+    </div>
+    
+    <button class="btn btn-logout" onclick="logoutAdmin()">🚪 Logout</button>
+  </div>
+<div id="store-status"></div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://nnohtnywmhuzueamsats.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ub2h0bnl3bWh1enVlYW1zYXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNjM4NDksImV4cCI6MjA3NDYzOTg0OX0.S8FeDIdXQ32WH9QPVlSsYGRjxYbLMg6HXQicZ35A1pg";
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+  </script>
+
+  <script src="js/kamar.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Admin | UD Fikri</title>
+  <link rel="stylesheet" href="css/login.css" />
+  <link rel="icon" type="image/png" href="images/logo.png" />
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <h2>Selamat Datang Kembali 👋</h2>
+      <p>Masuk ke akun admin UD Fikri</p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <input type="email" id="email" placeholder="Alamat Email" required />
+        </div>
+        <div class="form-group password-field">
+          <input type="password" id="password" placeholder="Kata Sandi" required />
+          <span class="toggle-pass" onclick="togglePassword()">👁️</span>
+        </div>
+
+        <div class="form-options">
+          <label><input type="checkbox" id="remember"> Ingat saya</label>
+          <a href="#" class="forgot-link">Lupa sandi?</a>
+        </div>
+
+        <button type="submit" class="btn-login">Masuk</button>
+
+        <div class="divider"><span>atau masuk dengan</span></div>
+
+          ...
+  <div class="social-login">
+    <button type="button" class="google-btn">
+      <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" /> Google
+    </button>
+    <button type="button" class="github-btn">
+      <img src="https://www.svgrepo.com/show/512317/github-142.svg" alt="GitHub" /> GitHub
+    </button>
+  </div>
+
+  <p class="signup-text">Belum punya akun? <a href="#">Daftar</a></p>
+</form>
+</div>
+</div>
+
+<!-- Tambahkan ini di paling bawah sebelum </body> -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="js/login.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toko Sembako UD Fikri</title>
+  <link rel="icon" href="images/faveicon.png">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta name="google-site-verification" content="DozAhvLW2-_UmwV-2AW3aaeUrh38l1UGornz5dfROHM" />
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MLS460Q2ET"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MLS460Q2ET');
+</script>
+  <!-- === AOS (Animate On Scroll) === -->
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <!-- Leaflet -->
+</head>
+<body>
+
+<header>
+  <div id="logo-container">
+    <img src="images/logo.png" alt="Logo" width="50">
+    <h1>TOKO SEMBAKO UD-FIKRI</h1>
+  </div>
+  <div class="search-filter">
+    <input type="text" id="search-input" placeholder="Cari produk...">
+    <select id="filter-category">
+      <option value="">Semua Kategori</option>
+    </select>
+  </div>
+</header>
+
+<div id="welcome" data-aos="fade-in">
+  <i class="fa-solid fa-handshake handshake-icon"></i>
+  Selamat datang di <strong>Toko Sembako UD-Fikri!</strong>
+</div>
+
+<section id="store-status">
+  <div id="store-status-msg" class="store-status"></div>
+</section>
+
+<section id="store-info">
+  <!-- <h3>Informasi & Deskripsi Toko</h3> -->
+
+  <!-- Accordion: Deskripsi Toko -->
+  <button  data-aos="fade-right" class="accordion"> <i class="fa-solid fa-book-open" style="margin-right:8px;"></i>
+    Deskripsi (Usaha Dagang) UD-Fikri
+  </button>
+  <div class="panel">
+    <div data-aos="fade-in" class="desc-text">
+      <ul> 
+        <li>Toko Sembako UD-Fikri selalu siap memenuhi kebutuhan harian Anda. Dengan harga yang terjangkau, belanja jadi lebih mudah dan menyenangkan.</li>
+        <li>Kami siap antar pesanan anda. Standar Operasioanl pengiriman hanya sampai depan rumah <strong>GRATIS</strong>.</li>
+        <li>Antar pesanan sampai dalam rumah! Tambahan biaya Rp1.000/item (khusus produk tertentu). Silakan centang di keranjang ✅.</li>
+        <br> <br>
+      </ul>
+      <div class="desc-image">
+        <img src="images/deskripsi.jpg" alt="Gambar Toko">
+      </div>
+    </div>
+  </div>
+
+  <!-- Accordion: Detail Toko -->
+  <button data-aos="fade-left" class="accordion"> <i class="fa-solid fa-book-open" style="margin-right:8px;"></i>
+    Informasi & Jam Operasional</button>
+  <div class="panel">
+    <ul> 
+      <li><i data-aos="fade-in" class="fa-regular fa-clock"></i> Jam Buka:</li>
+      <strong>Setiap Hari Pukul 06:00 - 18:00 WIB</strong>
+      <br><br>
+
+      <li><i data-aos="fade-in" class="fa-solid fa-phone"></i> Kontak WhatsApp Opsional:</li>
+      <strong>0852-8106-6230</strong>
+      <br><br>
+
+      <li><i data-aos="fade-in" class="fa-solid fa-location-dot"></i> Alamat Toko:</li>
+      <strong>UD. FIKRI Jl Ampera Raya. Jl RIni RT.6/RW.2, Ragunan, Ps. Minggu, Kota Jakarta Selatan</strong>
+      <br> <br>
+    </ul>
+     <!-- Map tetap di luar accordion -->
+  <label data-aos="fade-in" for="lokasi"><i class="fa-solid fa-location-dot"></i>
+      <strong>Lokasi Toko Sembako UD-Fikri</strong></label>
+  <div data-aos="fade-in" class="map-container" style="margin-top:15px;">
+    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.8118961438554!2d106.81596807478407!3d-6.288438361550301!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f375ec5af3a1%3A0xeaaa81162b77c181!2sUD.%20FIKRI!5e0!3m2!1sid!2sid!4v1759140315801!5m2!1sid!2sid"
+      width="100%" height="300" style="border:0; border-radius:10px;" allowfullscreen="" loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  </div>
+  
+<button data-aos="fade-right" class="accordion">
+   <i data-aos="fade-in" class="fa-solid fa-lightbulb" style="margin-right:8px;"></i>
+  Saran & Masukan Produk
+</button>
+  <div data-aos="fade-in" class="panel">
+    <p>Silakan tulis saran atau masukan produk yang ingin tersedia di toko kami:</p>
+    <textarea id="saran-produk" rows="3" placeholder="Contoh: Tambahkan Gula, Kopi, dll." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></textarea>
+    <br> <br>
+  </div>
+
+  <label data-aos="fade-in" for="lokasi"><i class="fa-solid fa-location-dot"></i>
+  <strong>Titik Lokasi Anda (Opsional)</strong></label>
+
+<input data-aos="fade-in" type="text" id="lokasi" placeholder="Tempel link share lokasi Google Maps"
+  style="width:100%;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:6px;">
+
+<button data-aos="fade-right" type="button" id="ambil-lokasi"
+  style="margin-top:6px;padding:6px 12px;border:none;border-radius:6px;background: linear-gradient(90deg,#00bfff,#1e90ff);color:#fff;cursor:pointer;">
+  <i class="fa-solid fa-bullseye"></i>
+  Ambil Lokasi Anda
+</button>
+
+<!-- Tambahkan MAP di bawah tombol -->
+<div id="user-map" data-aos="fade-up"
+  style="height:300px;margin-top:10px;border-radius:10px;border:1px solid #ddd;"></div>
+
+<p data-aos="fade-up" style="font-size:14px;color:#555;margin-top:6px;">
+  Geser pin biru untuk menyesuaikan lokasi Anda. Koordinat: <span id="koordinat">Belum ditentukan</span>
+</p>
+</section>
+
+<section data-aos="fade-up" id="cart">
+  <h2><i class="fas fa-shopping-cart"></i> Keranjang</h2>
+  <ul id="cart-items"></ul>
+
+  <div id="cart-total">Total: Rp 0</div>
+  <!--<p data-aos="fade-up" style="font-size:14px;color:#555;margin-top:6px;">
+  Pembelian min Rp 40.000 siap antar, dibawah Rp 40.000 ambil di toko
+  </p>-->
+  <p id="status-pesanan" style="font-weight:bold; margin-top:6px;"></p>
+
+  <button id="clear-cart" class="btn-clear">🗑 Hapus Semua Keranjang</button>
+
+  <label for="customer-name"><i class="fas fa-user"></i> Nama Pemesan</label>
+  <input type="text" id="customer-name" placeholder="Masukkan nama anda">
+
+  <label for="customer-address"><i class="fas fa-map-marker-alt"></i> Alamat</label>
+  <input type="text" id="customer-address" placeholder="Contoh: Jl. Melati No. 10">
+
+  <div id="payment-section">
+    <label for="payment-method">Metode Pembayaran:</label>
+    <select id="payment-method">
+      <option value="">-- Pilih --</option>
+      <option value="Transfer">Transfer Bank</option>
+      <option value="QRIS">QRIS</option>
+      <option value="Tunai/Cash">Tunai/Cash</option>
+    </select>
+
+    <div id="payment-info" class="payment-info"></div>
+  </div>
+
+  <button id="checkout">Pesan Sekarang</button>
+</section>
+
+<section data-aos="fade-up" id="products-container" class="products-grid">
+  <!-- Produk akan digenerate otomatis oleh script.js -->
+</section>
+
+<footer>&copy; 2025 Ikmal Falahi. All Rights Reserved.</footer>
+
+<!-- 1. Load library supabase dulu -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- 2. Inisialisasi client -->
+<script>
+  const supabaseUrl = "https://nnohtnywmhuzueamsats.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ub2h0bnl3bWh1enVlYW1zYXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNjM4NDksImV4cCI6MjA3NDYzOTg0OX0.S8FeDIdXQ32WH9QPVlSsYGRjxYbLMg6HXQicZ35A1pg";
+  const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+</script>
+
+<!-- 3. Baru setelah itu load script.js -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="js/script.js"></script>
+
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+  AOS.init({
+    duration: 800,
+    easing: 'ease-in-out',
+    once: true
+  });
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
