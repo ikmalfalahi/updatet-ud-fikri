@@ -1,71 +1,151 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>kamar-udfikri</title>
-  <link rel="stylesheet" href="css/kamar.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Admin - UD Fikri</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:sans-serif;margin:0;background:#f5f5f5;}
+header{background:#27ae60;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center;}
+main{padding:15px;}
+.card{background:#fff;border-radius:10px;padding:15px;margin-bottom:20px;box-shadow:0 2px 6px rgba(0,0,0,0.05);}
+.card h2{margin-top:0;}
+input{padding:8px;border-radius:6px;border:1px solid #ccc;margin-bottom:10px;width:100%;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+th{background:#f0f0f0;}
+.low-stock{color:red;font-weight:bold;}
+@media(max-width:600px){ table,th,td{font-size:0.8em;} }
+</style>
 </head>
 <body>
-   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Cek apakah admin sudah login
-    const isLoggedIn =
-      localStorage.getItem("admin_logged_in") === "true" ||
-      sessionStorage.getItem("admin_logged_in") === "true";
 
-    console.log("Login status:", isLoggedIn); // Debug
+<header>
+  <h1>Dashboard Admin - UD Fikri</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
 
-    if (!isLoggedIn) {
-      console.warn("Belum login, mengarahkan ke login.html...");
-      window.location.replace("login.html");
-      return;
-    }
-
-    console.log("Sudah login, tetap di halaman kamar.html");
-  });
-</script>
-
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const isLoggedIn =
-      localStorage.getItem("admin_logged_in") === "true" ||
-      sessionStorage.getItem("admin_logged_in") === "true";
-
-    if (!isLoggedIn) {
-      window.location.replace("login.html");
-      return;
-    }
-  });
-</script>
-
-  <div class="container">
-    <h1>KAMAR UD-FIKRI</h1>
-    <div id="admin-status" class="store-status">Silahkan Pilih</div>
-    <div class="buttons">
-      <button class="btn btn-open" onclick="setStore(true)">🟢 Buka Toko</button>
-      <button class="btn btn-close" onclick="setStore(false)">🔴 Tutup Toko</button>
-    </div>
-    
-    <button class="btn btn-logout" onclick="logoutAdmin()">🚪 Logout</button>
+<main>
+  <!-- Statistik -->
+  <div class="card">
+    <h2>Ringkasan Penjualan</h2>
+    <p>Total Orders: <span id="totalOrders">0</span></p>
+    <p>Total Omzet: Rp <span id="totalRevenue">0</span></p>
+    <p>Total Produk Terjual: <span id="totalProductsSold">0</span></p>
   </div>
-<div id="store-status"></div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    const supabaseUrl = "https://nnohtnywmhuzueamsats.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ub2h0bnl3bWh1enVlYW1zYXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNjM4NDksImV4cCI6MjA3NDYzOTg0OX0.S8FeDIdXQ32WH9QPVlSsYGRjxYbLMg6HXQicZ35A1pg";
-    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-  </script>
+  <!-- Grafik Omzet -->
+  <div class="card">
+    <h2>Omzet per Bulan</h2>
+    <canvas id="revenueChart"></canvas>
+  </div>
 
-  <script src="js/kamar.js"></script>
+  <!-- Search Produk -->
+  <div class="card">
+    <h2>Produk</h2>
+    <input type="text" id="searchProduct" placeholder="Cari produk...">
+    <table>
+      <thead><tr><th>Nama</th><th>Harga</th><th>Stok</th></tr></thead>
+      <tbody id="productList">Memuat produk...</tbody>
+    </table>
+  </div>
+
+  <!-- Search Orders -->
+  <div class="card">
+    <h2>Orders</h2>
+    <input type="text" id="searchOrder" placeholder="Cari order (nama pelanggan)...">
+    <table>
+      <thead><tr><th>Order</th><th>Pelanggan</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody id="orderList">Memuat orders...</tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = "https://ucizdtqovtajqjkgoyef.supabase.co";
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ================= AUTH =================
+if(!localStorage.getItem('admin_id')) window.location.href='login.html';
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  localStorage.removeItem('admin_id'); window.location.href='login.html';
+});
+
+// ================= STATISTIK =================
+async function loadStats(){
+  const { data: orders } = await supabase.from('orders').select('*');
+  const { data: items } = await supabase.from('order_items').select('*');
+
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((s,o)=>s+Number(o.total),0);
+  const totalProductsSold = items.reduce((s,i)=>s+Number(i.qty),0);
+
+  document.getElementById('totalOrders').textContent = totalOrders;
+  document.getElementById('totalRevenue').textContent = totalRevenue.toLocaleString();
+  document.getElementById('totalProductsSold').textContent = totalProductsSold;
+
+  // Grafik omzet per bulan
+  const omzetPerMonth = {};
+  orders.forEach(o=>{
+    const month = new Date(o.created_at).toLocaleString('default',{month:'short',year:'numeric'});
+    omzetPerMonth[month] = (omzetPerMonth[month]||0)+Number(o.total);
+  });
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{
+    labels:Object.keys(omzetPerMonth),
+    datasets:[{label:'Omzet',data:Object.values(omzetPerMonth),backgroundColor:'#27ae60'}]
+  }});
+}
+
+// ================= PRODUK =================
+async function loadProducts(){
+  const { data } = await supabase.from('products').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('productList');
+  tbody.innerHTML = data.map(p=>`
+    <tr>
+      <td>${p.name}</td>
+      <td>Rp ${Number(p.price).toLocaleString()}</td>
+      <td class="${p.stock<5?'low-stock':''}">${p.stock}</td>
+    </tr>
+  `).join('');
+}
+
+// ================= ORDERS =================
+async function loadOrders(){
+  const { data } = await supabase.from('orders').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('orderList');
+  tbody.innerHTML = data.map(o=>`
+    <tr>
+      <td>${o.id.slice(0,6)}</td>
+      <td>${o.customer_name}</td>
+      <td>Rp ${Number(o.total).toLocaleString()}</td>
+      <td>${o.status}</td>
+    </tr>
+  `).join('');
+}
+
+// ================= SEARCH =================
+document.getElementById('searchProduct').addEventListener('input', async (e)=>{
+  const term = e.target.value.toLowerCase();
+  const { data } = await supabase.from('products').select('*').ilike('name', `%${term}%`);
+  const tbody = document.getElementById('productList');
+  tbody.innerHTML = data.map(p=>`<tr><td>${p.name}</td><td>Rp ${Number(p.price).toLocaleString()}</td><td class="${p.stock<5?'low-stock':''}">${p.stock}</td></tr>`).join('');
+});
+
+document.getElementById('searchOrder').addEventListener('input', async (e)=>{
+  const term = e.target.value.toLowerCase();
+  const { data } = await supabase.from('orders').select('*').ilike('customer_name', `%${term}%`);
+  const tbody = document.getElementById('orderList');
+  tbody.innerHTML = data.map(o=>`<tr><td>${o.id.slice(0,6)}</td><td>${o.customer_name}</td><td>Rp ${Number(o.total).toLocaleString()}</td><td>${o.status}</td></tr>`).join('');
+});
+
+// ================= INIT =================
+loadStats();
+loadProducts();
+loadOrders();
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
