@@ -14,13 +14,14 @@ const totalTxt = document.getElementById("totalTxt");
 const promoInput = document.getElementById("promoCode");
 const applyPromoBtn = document.getElementById("applyPromoBtn");
 const promoMsg = document.getElementById("promoMsg");
-const checkoutBtn = document.getElementById("checkout-btn");
-const checkoutMsg = document.getElementById("checkout-msg");
+const checkoutBtn = document.getElementById("checkoutBtn");
+const checkoutWA = document.getElementById("checkoutWA");
+const checkoutMsg = document.getElementById("checkoutMsg");
 
-const shippingName = document.getElementById("shipping-name");
-const shippingPhone = document.getElementById("shipping-phone");
-const shippingAddress = document.getElementById("shipping-address");
-const shippingCity = document.getElementById("shipping-city");
+const shippingName = document.getElementById("shippingName");
+const shippingPhone = document.getElementById("shippingPhone");
+const shippingAddress = document.getElementById("shippingAddress");
+const shippingCity = document.getElementById("shippingCity");
 
 // ===== STATE =====
 let cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -41,28 +42,22 @@ function renderCart() {
 
   cartListEl.innerHTML = cart
     .map((item) => {
-      // Hitung harga setelah diskon
       let finalPrice = Number(item.price_snapshot);
-      if (item.discount) {
-        finalPrice = finalPrice - (finalPrice * item.discount) / 100;
-      }
-
+      if (item.discount) finalPrice -= (finalPrice * item.discount) / 100;
       const subtotal = finalPrice * item.qty;
       return `
         <div class="cart-item" data-id="${item.id}">
           <img src="${item.image_url || "images/default-product.png"}" alt="${item.name}">
           <div class="cart-info">
             <h4>${item.name}</h4>
-            ${
-              item.discount
-                ? `<p class="old">Rp ${item.price_snapshot.toLocaleString()}</p>`
-                : ""
-            }
+            ${item.discount ? `<p class="old">${formatRp(item.price_snapshot)}</p>` : ""}
             <p class="price">${formatRp(finalPrice)}</p>
             <p class="desc">${item.description || ""}</p>
             <div class="qty-row">
               <label>Qty:</label>
+              <button class="qty-btn minus">-</button>
               <input type="number" class="qty-input" min="1" value="${item.qty}" data-id="${item.id}">
+              <button class="qty-btn plus">+</button>
               <button class="remove-btn" data-id="${item.id}">🗑 Hapus</button>
             </div>
             <p class="subtotal">Subtotal: <strong>${formatRp(subtotal)}</strong></p>
@@ -72,17 +67,35 @@ function renderCart() {
     })
     .join("");
 
-  // listener qty & hapus
+  // Event listeners
   document.querySelectorAll(".qty-input").forEach((el) => {
     el.addEventListener("change", (e) => {
       const id = e.target.dataset.id;
       updateQty(id, parseInt(e.target.value) || 1);
     });
   });
+
+  document.querySelectorAll(".qty-btn.minus").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const input = e.target.nextElementSibling;
+      const id = input.dataset.id;
+      let val = parseInt(input.value) || 1;
+      if (val > 1) updateQty(id, val - 1);
+    });
+  });
+
+  document.querySelectorAll(".qty-btn.plus").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const input = e.target.previousElementSibling;
+      const id = input.dataset.id;
+      let val = parseInt(input.value) || 1;
+      updateQty(id, val + 1);
+    });
+  });
+
   document.querySelectorAll(".remove-btn").forEach((b) => {
     b.addEventListener("click", (e) => {
-      const id = e.target.dataset.id;
-      removeItem(id);
+      removeItem(e.target.dataset.id);
     });
   });
 
@@ -95,6 +108,14 @@ function updateQty(id, qty) {
   if (idx === -1) return;
   cart[idx].qty = qty;
   saveCart();
+
+  const cartItemEl = document.querySelector(`.cart-item[data-id="${id}"]`);
+  if (cartItemEl) {
+    const subtotalEl = cartItemEl.querySelector(".subtotal strong");
+    subtotalEl.classList.add("subtotal-updated");
+    setTimeout(() => subtotalEl.classList.remove("subtotal-updated"), 300);
+  }
+
   renderCart();
 }
 
@@ -117,7 +138,7 @@ function recalcTotals() {
   let subtotal = 0;
   cart.forEach((i) => {
     let price = i.price_snapshot;
-    if (i.discount) price = price - (price * i.discount) / 100;
+    if (i.discount) price -= (price * i.discount) / 100;
     subtotal += price * i.qty;
   });
 
@@ -157,14 +178,9 @@ async function applyPromo() {
     )
       return (promoMsg.textContent = "Voucher belum aktif / kadaluwarsa.");
 
-    const subtotal = cart.reduce(
-      (s, i) => s + Number(i.price_snapshot) * Number(i.qty),
-      0
-    );
+    const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
     if (promo.min_total && subtotal < promo.min_total)
-      return (promoMsg.textContent = `Minimal pembelian ${formatRp(
-        promo.min_total
-      )}`);
+      return (promoMsg.textContent = `Minimal pembelian ${formatRp(promo.min_total)}`);
 
     let discount = 0;
     if (promo.type === "percent") discount = subtotal * (promo.value / 100);
@@ -184,8 +200,7 @@ async function applyPromo() {
 // ===== Checkout =====
 async function checkout() {
   checkoutMsg.textContent = "";
-  if (cart.length === 0)
-    return (checkoutMsg.textContent = "Keranjang kosong.");
+  if (cart.length === 0) return (checkoutMsg.textContent = "Keranjang kosong.");
 
   const name = shippingName.value.trim();
   const phone = shippingPhone.value.trim();
@@ -199,10 +214,7 @@ async function checkout() {
   checkoutMsg.textContent = "Membuat pesanan...";
 
   try {
-    const subtotal = cart.reduce(
-      (s, i) => s + Number(i.price_snapshot) * Number(i.qty),
-      0
-    );
+    const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
     const discount = appliedPromo ? appliedPromo.discount : 0;
     const shipping = estimateShipping(subtotal);
     const total = Math.max(0, subtotal - discount + shipping);
@@ -236,10 +248,7 @@ async function checkout() {
       subtotal: Number(ci.price_snapshot) * Number(ci.qty),
     }));
 
-    const { error: itemsErr } = await supabase
-      .from("order_items")
-      .insert(itemsToInsert);
-
+    const { error: itemsErr } = await supabase.from("order_items").insert(itemsToInsert);
     if (itemsErr) throw itemsErr;
 
     localStorage.removeItem("cart");
@@ -258,9 +267,25 @@ async function checkout() {
   }
 }
 
+// ===== Checkout via WhatsApp =====
+checkoutWA?.addEventListener("click", () => {
+  if (cart.length === 0) return alert("Keranjang kosong!");
+
+  let msg = "🛒 *Pesanan UD Fikri* 🛒\n\n";
+  cart.forEach((i) => {
+    let price = i.price_snapshot;
+    if (i.discount) price -= (price * i.discount) / 100;
+    msg += `${i.name} x${i.qty} = ${formatRp(price * i.qty)}\n`;
+  });
+  const subtotal = cart.reduce((s, i) => s + Number(i.price_snapshot) * Number(i.qty), 0);
+  msg += `\nTotal: ${formatRp(subtotal)}\nNama: ${shippingName.value}\nAlamat: ${shippingAddress.value}\nKota: ${shippingCity.value}\nTelp: ${shippingPhone.value}`;
+  const waLink = `https://wa.me/62xxxxxx?text=${encodeURIComponent(msg)}`;
+  window.open(waLink, "_blank");
+});
+
 // ===== Event Bindings =====
 applyPromoBtn?.addEventListener("click", applyPromo);
 checkoutBtn?.addEventListener("click", checkout);
 
-// Init
+// ===== Init =====
 renderCart();
