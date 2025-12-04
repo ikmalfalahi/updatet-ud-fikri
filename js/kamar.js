@@ -41,10 +41,4 @@ if (!error && data) {
 }
 })();
 
-//logout
-function logoutAdmin() {
-  localStorage.removeItem("admin_logged_in");
-  sessionStorage.removeItem("admin_logged_in");
-  alert("Anda telah keluar.");
-  window.location.replace("login.html");
-}
+
